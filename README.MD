@@ -105,11 +105,12 @@ Raw columns:
 
 ## Environment Setup
 
+```bash
+dowload file from kaggle  https://www.kaggle.com/datasets/carrie1/ecommerce-data/data then add this in data/raw 
+```
+
 Create and activate a virtual environment:
 
-```bash
-dowload file from kagel  https://www.kaggle.com/datasets/carrie1/ecommerce-data/data
-```
 
 ```bash
 python3 -m venv .venv
