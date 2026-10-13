@@ -1,0 +1,39 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+
+# Generated reports and exports
+*.xlsx
+*.xls
+*.parquet
+*.feather
+
+# Tool and OS noise
+.cache/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+data/processed/*.csv
+data/raw/*.csv
