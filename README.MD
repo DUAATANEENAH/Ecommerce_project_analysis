@@ -3,14 +3,14 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-complete-success.svg)]()
-[![License](https://img.shields.io/badge/license-MIT-green.svg)]()
 
 ---
 
 ## Executive Summary
-This repository contains a comprehensive data cleaning, feature engineering, and exploratory data analysis pipeline built for an international retail and customer dataset ($541,900+$ raw transactions across 37 countries). 
 
-As businesses scale, raw transaction logs quickly accumulate noise—including unlinked customer accounts, negative return quantities, system adjustments, and administrative fees. Left unchecked, these data anomalies distort executive dashboards and lead to misallocated marketing spend. This project transforms messy transactional logs into a pristine, audit-ready dataset and surfaces actionable customer segmentation insights.
+This repository contains a data cleaning, feature engineering, and exploratory analysis project built on 541,909 retail transactions from 38 countries.
+
+The project documents data quality issues, retains and labels return transactions, removes selected administrative records, and prepares transaction-level data for sales and customer analysis. It includes a notebook, processed datasets, dashboard, and client-facing reports.
 
 ---
 
@@ -24,30 +24,30 @@ As businesses scale, raw transaction logs quickly accumulate noise—including u
 
 ## Project Structure & Processing Workflow
 
-The data processing pipeline executed in the Google Colab notebook adheres to a rigorous senior-level analytics protocol:
+The notebook processes the source data through these stages:
 
 1. **Data Ingestion & Audit:**
    * Loaded raw transaction records (`data.csv`).
-   * Identified structural anomalies: $135,080$ missing customer IDs, $5,268$ duplicate rows, and multiple negative quantity entries representing order cancellations.
+   * Identified structural anomalies: 135,080 missing customer IDs, 5,268 duplicate rows, and negative quantities associated with returns or cancellations.
 2. **Data Cleaning & Sanitization:**
-   * Filtered out unlinked records to ensure accurate customer-level profiling.
+   * Retained records with missing customer IDs using a placeholder ID, so those transactions remain in aggregate sales analysis.
    * Removed administrative stock codes (e.g., `BANK CHARGES`, `AMAZONFEE`, `POST`, `DOT`) that represent operational costs rather than retail product sales.
-   * Addressed invalid pricing and zero-value test transactions.
+   * Removed rows with negative unit prices, as specified in the notebook's cleaning logic.
 3. **Outlier Handling & Comparison:**
-   * Evaluated **Removal vs. Capping (Percentile Thresholds)**. Concluded that hard capping distorts legitimate high-volume B2B/wholesale purchases, leading to a selective cleanup strategy focused solely on non-commercial administrative errors.
+   * Added percentile-capped numeric fields to the machine-learning-ready dataset while retaining the original transaction fields.
 4. **Categorical Encoding:**
-   * Applied **One-Hot Encoding** across the 37 distinct geographic markets (`Country`), preparing features for advanced machine learning models and clustering without imposing false numerical hierarchies.
+   * Applied one-hot encoding to the 38 countries represented in the source data.
 5. **Feature Engineering:**
-   * Generated explicit transactional metrics including `TotalLineRevenue` ($\text{Quantity} \times \text{UnitPrice}$).
+   * Calculated signed line revenue as `Revenue = Quantity * UnitPrice`; return rows have negative revenue.
    * Extracted temporal components (Year, Month, Day of Week, Hour) from timestamps.
-   * Aggregated transactional data into customer-level **RFM (Recency, Frequency, Monetary)** features.
+   * Summarized customer purchasing history and lifetime value in the notebook's analysis.
 
 ---
 
 ## Key Insights & Findings
 
-* **The Top 10% Revenue Rule:** Roughly $10\%$ of unique customer accounts account for over $61\%$ of total revenue. Focusing retention strategies and VIP loyalty tiers on this cohort provides a significantly higher ROI than broad, untargeted campaigns.
-* **Core Geographic Concentration:** The United Kingdom accounts for $\approx 82\%$ of total transaction volume, while key secondary markets (such as the Netherlands, EIRE, Germany, and France) represent highly lucrative cross-border opportunities.
+* **Customer Revenue Concentration:** Among identified customers (excluding the shared placeholder ID `99999`), the top 10% by absolute transaction value account for about 62.7% of identified-customer transaction value.
+* **Core Geographic Concentration:** The United Kingdom accounts for about 85.5% of total absolute transaction value. EIRE, the Netherlands, Germany, and France are the next largest markets by this measure.
 * **Q4 Holiday Seasonality:** Sales volume ramps up sharply starting in September and peaks heavily toward the end of the year, providing a clear window for advanced inventory stocking and holiday promotional campaigns.
 
 ---
@@ -57,20 +57,20 @@ The data processing pipeline executed in the Google Colab notebook adheres to a 
 To run the processing notebook and inspect the pipeline:
 
 1. Clone or download this repository.
-2. Open the notebook in Google Colab or your local Jupyter environment.
-3. Ensure your raw data file (`data.csv`) is placed in your working directory.
-4. Run cells sequentially to execute the data cleaning, feature engineering, and validation checks.
+2. Follow the environment setup below.
+3. Download the [Online Retail dataset](https://www.kaggle.com/datasets/carrie1/ecommerce-data) and save its CSV as `data/raw/data.csv`.
+4. Run `notebooks/Ecommerce_analysis.ipynb` in order. It writes the processed datasets under `data/processed/`.
 
 ---
 
 ## Deliverables
-* **Cleaned Dataset:** Audit-ready transaction file free of administrative noise.
-* **Interactive Dashboard:** Designed for tracking regional sales and customer lifetime value.
-* **Executive Report:** Summarized commercial insights and strategic recommendations.
+* **Cleaned datasets:** Transaction-level analytical and machine-learning-ready CSV files.
+* **Dashboard:** Power BI report and PDF export in `dashboard/`.
+* **Client reports:** Brief, proposal, and final report in `reports/`.
 
 ## Dataset Overview
 
-The raw dataset is the common Online Retail dataset from Kaggle / UCI-style sources. It contains transactions from `01/12/2010` to `09/12/2011` for a UK-based online retailer.
+The source is the Online Retail dataset available from Kaggle. It contains transactions dated from 1 December 2010 to 9 December 2011 for a UK-based online retailer.
 
 Raw columns:
 
@@ -95,9 +95,13 @@ Raw columns:
 |       `-- online_retail_clean_ml.csv
 |-- notebooks/
 |   `-- Ecommerce_analysis.ipynb
+|-- dashboard/
+|   |-- Ecommerce_analysis.pbix
+|   `-- Ecommerce_analysis.pdf
 |-- reports/
 |   |-- client_brief.pdf
-|   `-- client_proposal.pdf
+|   |-- client_proposal.pdf
+|   `-- final_report.pdf
 |-- requirements.txt
 |-- .gitignore
 `-- README.MD
@@ -105,11 +109,7 @@ Raw columns:
 
 ## Environment Setup
 
-```bash
-dowload file from kaggle  https://www.kaggle.com/datasets/carrie1/ecommerce-data/data then add this in data/raw 
-```
-
-Create and activate a virtual environment:
+Download the dataset from [Kaggle](https://www.kaggle.com/datasets/carrie1/ecommerce-data) and save its CSV as `data/raw/data.csv`. Then create and activate a virtual environment:
 
 
 ```bash
@@ -174,7 +174,8 @@ Main issues found in the raw data:
 - `5,268` duplicate rows
 - `135,080` missing `CustomerID` values
 - `1,454` missing `Description` values
-- Negative quantities and prices related to returns, cancellations, or adjustments
+- Negative quantities associated with returns and cancellations
+- Negative unit prices associated with adjustments; these rows are removed during cleaning
 - `InvoiceDate` stored as text instead of datetime
 
 Main transformations:
@@ -183,6 +184,7 @@ Main transformations:
 - Filled missing `CustomerID` values with a placeholder for unknown customers.
 - Filled or mapped missing product descriptions where possible.
 - Created `TransactionType` to separate standard sales from returns.
+- Removed rows with negative `UnitPrice` values.
 - Converted `InvoiceDate` to datetime.
 - Created `Revenue = Quantity * UnitPrice`.
 - Added time-based features: `YearMonth`, `Hour`, and `DayOfWeek`.
@@ -194,41 +196,50 @@ Main transformations:
 | File | Rows | Columns | Purpose |
 | --- | ---: | ---: | --- |
 | `data/raw/data.csv` | 541,909 | 8 | Original transaction data |
-| `data/processed/online_retail_clean.csv` | 536,641 | 13 | Cleaned analytics dataset |
-| `data/processed/online_retail_clean_ml.csv` | 536,641 | 54 | Machine-learning-ready dataset |
+| `data/processed/online_retail_clean.csv` | 533,877 | 13 | Cleaned analytics dataset |
+| `data/processed/online_retail_clean_ml.csv` | 533,877 | 53 | Machine-learning-ready dataset |
 
 ## Key Results
 
 From the cleaned dataset:
 
-- Total cleaned records: `536,641`
-- Unique invoices: `25,900`
-- Unique customers: `4,373`
+- Total cleaned records: `533,877`
+- Unique invoices: `25,304`
+- Unique customer IDs: `4,364` (includes placeholder ID `99999` for unidentified customers)
 - Countries represented: `38`
-- Total revenue: `9,726,006.95`
-- Standard transaction rows: `524,878`
-- Return transaction rows: `11,763`
-- Final ML dataset missing values: `0`
+- Net revenue (including returns): `£9,790,054.58`
+- Total transaction value (`sum(abs(Revenue))`, counting returns as positive activity): `£10,741,986.90`
+- Final ML dataset missing values: `0` (checked across all 53 columns)
 
-Top revenue products:
+### Standard Sales and Returns
 
-| Rank | Product | Revenue |
+`Revenue` is signed, so return transactions reduce net revenue. For total transaction activity, the absolute value of each row's `Revenue` is summed; this counts returned value as positive activity. The absolute-value metric is calculated for this report and is not a separate column in the processed CSVs.
+
+| Transaction type | Rows | Signed revenue | Absolute transaction value |
+| --- | ---: | ---: | ---: |
+| Standard sales | 525,207 | £10,266,020.74 | £10,266,020.74 |
+| Returns | 8,670 | -£475,966.16 | £475,966.16 |
+| **Total** | **533,877** | **£9,790,054.58 net** | **£10,741,986.90** |
+
+Top products by absolute transaction value:
+
+| Rank | Product | Absolute transaction value (£) |
 | ---: | --- | ---: |
-| 1 | DOTCOM POSTAGE | 206,245.48 |
-| 2 | REGENCY CAKESTAND 3 TIER | 164,459.49 |
-| 3 | PARTY BUNTING | 98,243.88 |
-| 4 | WHITE HANGING HEART T-LIGHT HOLDER | 97,659.94 |
-| 5 | JUMBO BAG RED RETROSPOT | 92,175.79 |
+| 1 | PAPER CRAFT , LITTLE BIRDIE | 336,939.20 |
+| 2 | REGENCY CAKESTAND 3 TIER | 183,853.59 |
+| 3 | MEDIUM CERAMIC TOP STORAGE JAR | 159,180.56 |
+| 4 | WHITE HANGING HEART T-LIGHT HOLDER | 112,861.02 |
+| 5 | PARTY BUNTING | 100,646.58 |
 
-Top revenue countries:
+Top countries by absolute transaction value:
 
-| Rank | Country | Revenue |
+| Rank | Country | Absolute transaction value (£) |
 | ---: | --- | ---: |
-| 1 | United Kingdom | 8,167,128.18 |
-| 2 | Netherlands | 284,661.54 |
-| 3 | EIRE | 262,993.38 |
-| 4 | Germany | 221,509.47 |
-| 5 | France | 197,317.11 |
+| 1 | United Kingdom | 9,180,722.40 |
+| 2 | EIRE | 287,626.70 |
+| 3 | Netherlands | 284,299.14 |
+| 4 | Germany | 210,142.64 |
+| 5 | France | 187,095.40 |
 
 ## Business Questions Supported
 
