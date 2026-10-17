@@ -4,13 +4,25 @@
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-complete-success.svg)]()
 
----
-
 ## Executive Summary
 
-This repository contains a data cleaning, feature engineering, and exploratory analysis project built on 541,909 retail transactions from 38 countries.
+This project analyzes 541,909 retail transactions across 38 countries and provides a reproducible cleaning notebook, analytical datasets, a Power BI dashboard, and client reports.
 
-The project documents data quality issues, retains and labels return transactions, removes selected administrative records, and prepares transaction-level data for sales and customer analysis. It includes a notebook, processed datasets, dashboard, and client-facing reports.
+**Headline results:** cleaned signed net revenue is **£9.79M**; standard sales total **£10.27M**; returns total **£0.476M**; and the UK contributes **85.5%** of absolute transaction value.
+
+### Key Insights & Findings
+
+- **Customer concentration:** Among identified customers (excluding placeholder ID `99999`), the top 10% account for about **62.7%** of identified-customer absolute transaction value.
+- **Geographic mix:** The UK contributes about **85.5%** of absolute transaction value. EIRE, the Netherlands, Germany, and France are the next largest markets.
+- **Seasonality:** Transaction activity rises in the final quarter, with November the strongest month in the cleaned data.
+
+### Power BI Dashboard
+
+[![Sales and Revenue Analysis dashboard preview](dashboard/dashboard-preview.png)](dashboard/Ecommerce_analysis.pdf)
+
+[Open the dashboard PDF](dashboard/Ecommerce_analysis.pdf) · [Download the Power BI file](dashboard/Ecommerce_analysis.pbix)
+
+> **Dashboard metric note:** The current dashboard export labels £10.74M as “Net Revenue.” That figure is absolute transaction value; signed net revenue after returns is £9.79M. Reconcile the Power BI measure before using that card in a presentation.
 
 ---
 
@@ -33,22 +45,14 @@ The notebook processes the source data through these stages:
    * Retained records with missing customer IDs using a placeholder ID, so those transactions remain in aggregate sales analysis.
    * Removed administrative stock codes (e.g., `BANK CHARGES`, `AMAZONFEE`, `POST`, `DOT`) that represent operational costs rather than retail product sales.
    * Removed rows with negative unit prices, as specified in the notebook's cleaning logic.
-3. **Outlier Handling & Comparison:**
-   * Added percentile-capped numeric fields to the machine-learning-ready dataset while retaining the original transaction fields.
+3. **Outlier Handling:**
+   * Winsorized `Quantity` and `UnitPrice` between the 1st and 99th percentiles for the ML feature set, retaining the original fields alongside the capped versions.
 4. **Categorical Encoding:**
    * Applied one-hot encoding to the 38 countries represented in the source data.
 5. **Feature Engineering:**
    * Calculated signed line revenue as `Revenue = Quantity * UnitPrice`; return rows have negative revenue.
    * Extracted temporal components (Year, Month, Day of Week, Hour) from timestamps.
    * Summarized customer purchasing history and lifetime value in the notebook's analysis.
-
----
-
-## Key Insights & Findings
-
-* **Customer Revenue Concentration:** Among identified customers (excluding the shared placeholder ID `99999`), the top 10% by absolute transaction value account for about 62.7% of identified-customer transaction value.
-* **Core Geographic Concentration:** The United Kingdom accounts for about 85.5% of total absolute transaction value. EIRE, the Netherlands, Germany, and France are the next largest markets by this measure.
-* **Q4 Holiday Seasonality:** Sales volume ramps up sharply starting in September and peaks heavily toward the end of the year, providing a clear window for advanced inventory stocking and holiday promotional campaigns.
 
 ---
 
@@ -97,7 +101,8 @@ Raw columns:
 |   `-- Ecommerce_analysis.ipynb
 |-- dashboard/
 |   |-- Ecommerce_analysis.pbix
-|   `-- Ecommerce_analysis.pdf
+|   |-- Ecommerce_analysis.pdf
+|   `-- dashboard-preview.png
 |-- reports/
 |   |-- client_brief.pdf
 |   |-- client_proposal.pdf
@@ -188,8 +193,12 @@ Main transformations:
 - Converted `InvoiceDate` to datetime.
 - Created `Revenue = Quantity * UnitPrice`.
 - Added time-based features: `YearMonth`, `Hour`, and `DayOfWeek`.
-- Created ML-ready capped numeric fields.
-- Encoded categorical variables such as `TransactionType` and `Country`.
+- Removed numeric outliers for ML by clipping `Quantity` and `UnitPrice` to their respective 1st and 99th percentile bounds. Values below the 1st percentile are raised to that lower bound; values above the 99th percentile are reduced to that upper bound. The original columns remain available alongside `Quantity_Capped`, `UnitPrice_Capped`, and signed `Revenue_Capped`.
+- Encoded `TransactionType` as a binary feature and one-hot encoded `Country` (dropping one country column as the reference category).
+
+### Machine-Learning-Ready Features
+
+The ML export retains the transaction and time fields, adds capped numeric features (`Quantity_Capped`, `UnitPrice_Capped`, and `Revenue_Capped`), adds `TransactionType_Binary`, and expands `Country` into one-hot columns. These prepared features support downstream modeling such as customer segmentation and customer lifetime value (CLV) analysis. The notebook prepares the features; it does not train or evaluate a segmentation or predictive model.
 
 ## Output Files
 
@@ -197,7 +206,7 @@ Main transformations:
 | --- | ---: | ---: | --- |
 | `data/raw/data.csv` | 541,909 | 8 | Original transaction data |
 | `data/processed/online_retail_clean.csv` | 533,877 | 13 | Cleaned analytics dataset |
-| `data/processed/online_retail_clean_ml.csv` | 533,877 | 53 | Machine-learning-ready dataset |
+| `data/processed/online_retail_clean_ml.csv` | 533,877 | 53 | Machine-learning-ready feature set |
 
 ## Key Results
 
@@ -257,7 +266,13 @@ The cleaned dataset can be used to answer questions such as:
 
 - The raw CSV may require `ISO-8859-1` encoding when loaded directly with pandas.
 - The `reports/` folder is reserved for client-facing deliverables.
-- Large data files are ignored by Git through `.gitignore`; keep raw and processed datasets locally unless a data storage policy is defined.
+- The raw source CSV is expected at `data/raw/data.csv`; processed outputs are written to `data/processed/`.
+
+## Suggested GitHub Topics
+
+Add these topics in the repository’s **About** settings on GitHub:
+
+`python` · `pandas` · `power-bi` · `retail-analytics` · `exploratory-data-analysis`
 
 ## Requirements
 
@@ -270,3 +285,4 @@ Main Python packages:
 - scikit-learn
 - ipykernel
 - nbconvert
+- notebook
